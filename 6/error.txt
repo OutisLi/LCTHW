@@ -1,0 +1,39 @@
+==453551== Memcheck, a memory error detector
+==453551== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
+==453551== Using Valgrind-3.18.1 and LibVEX; rerun with -h for copyright info
+==453551== Command: ./ex6
+==453551== 
+==453551== Invalid read of size 1
+==453551==    at 0x484ED16: strlen (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==453551==    by 0x48EAD30: __vfprintf_internal (vfprintf-internal.c:1517)
+==453551==    by 0x48D479E: printf (printf.c:33)
+==453551==    by 0x109290: main (ex6.c:18)
+==453551==  Address 0x41 is not stack'd, malloc'd or (recently) free'd
+==453551== 
+==453551== 
+==453551== Process terminating with default action of signal 11 (SIGSEGV)
+==453551==  Access not within mapped region at address 0x41
+==453551==    at 0x484ED16: strlen (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==453551==    by 0x48EAD30: __vfprintf_internal (vfprintf-internal.c:1517)
+==453551==    by 0x48D479E: printf (printf.c:33)
+==453551==    by 0x109290: main (ex6.c:18)
+==453551==  If you believe this happened as a result of a stack
+==453551==  overflow in your program's main thread (unlikely but
+==453551==  possible), you can try to increase the size of the
+==453551==  main thread stack using the --main-stacksize= flag.
+==453551==  The main thread stack size used in this run was 8388608.
+==453551== 
+==453551== HEAP SUMMARY:
+==453551==     in use at exit: 4,096 bytes in 1 blocks
+==453551==   total heap usage: 1 allocs, 0 frees, 4,096 bytes allocated
+==453551== 
+==453551== LEAK SUMMARY:
+==453551==    definitely lost: 0 bytes in 0 blocks
+==453551==    indirectly lost: 0 bytes in 0 blocks
+==453551==      possibly lost: 0 bytes in 0 blocks
+==453551==    still reachable: 4,096 bytes in 1 blocks
+==453551==         suppressed: 0 bytes in 0 blocks
+==453551== Rerun with --leak-check=full to see details of leaked memory
+==453551== 
+==453551== For lists of detected and suppressed errors, rerun with: -s
+==453551== ERROR SUMMARY: 1 errors from 1 contexts (suppressed: 0 from 0)
