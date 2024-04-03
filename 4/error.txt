@@ -1,0 +1,44 @@
+==427848== Memcheck, a memory error detector
+==427848== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
+==427848== Using Valgrind-3.18.1 and LibVEX; rerun with -h for copyright info
+==427848== Command: ./ex4
+==427848== 
+==427848== Conditional jump or move depends on uninitialised value(s)
+==427848==    at 0x48EAAD6: __vfprintf_internal (vfprintf-internal.c:1516)
+==427848==    by 0x48D479E: printf (printf.c:33)
+==427848==    by 0x109188: main (ex4.c:8)
+==427848== 
+==427848== Use of uninitialised value of size 8
+==427848==    at 0x48CE2EB: _itoa_word (_itoa.c:177)
+==427848==    by 0x48E9ABD: __vfprintf_internal (vfprintf-internal.c:1516)
+==427848==    by 0x48D479E: printf (printf.c:33)
+==427848==    by 0x109188: main (ex4.c:8)
+==427848== 
+==427848== Conditional jump or move depends on uninitialised value(s)
+==427848==    at 0x48CE2FC: _itoa_word (_itoa.c:177)
+==427848==    by 0x48E9ABD: __vfprintf_internal (vfprintf-internal.c:1516)
+==427848==    by 0x48D479E: printf (printf.c:33)
+==427848==    by 0x109188: main (ex4.c:8)
+==427848== 
+==427848== Conditional jump or move depends on uninitialised value(s)
+==427848==    at 0x48EA5C3: __vfprintf_internal (vfprintf-internal.c:1516)
+==427848==    by 0x48D479E: printf (printf.c:33)
+==427848==    by 0x109188: main (ex4.c:8)
+==427848== 
+==427848== Conditional jump or move depends on uninitialised value(s)
+==427848==    at 0x48E9C05: __vfprintf_internal (vfprintf-internal.c:1516)
+==427848==    by 0x48D479E: printf (printf.c:33)
+==427848==    by 0x109188: main (ex4.c:8)
+==427848== 
+I am -16778360 years old.
+I am 0 inches tall.
+==427848== 
+==427848== HEAP SUMMARY:
+==427848==     in use at exit: 0 bytes in 0 blocks
+==427848==   total heap usage: 1 allocs, 1 frees, 4,096 bytes allocated
+==427848== 
+==427848== All heap blocks were freed -- no leaks are possible
+==427848== 
+==427848== Use --track-origins=yes to see where uninitialised values come from
+==427848== For lists of detected and suppressed errors, rerun with: -s
+==427848== ERROR SUMMARY: 5 errors from 5 contexts (suppressed: 0 from 0)
