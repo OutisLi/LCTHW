@@ -28,6 +28,8 @@ struct Connection
     struct Database *db;
 };
 
+void Database_close(struct Connection *conn);
+
 void die(const char *message, struct Connection *conn)
 {
     if (errno)
@@ -60,44 +62,54 @@ void Database_load(struct Connection *conn)
         die("Failed to load database.", conn);
 }
 
-struct Connection *Database_open(const char *filename, char mode, int MAX_DATA, int MAX_ROWS)
-{
+struct Connection *Database_open(const char *filename, char mode, int MAX_DATA, int MAX_ROWS) {
     struct Connection *conn = malloc(sizeof(struct Connection));
-    if (!conn)
-        die("Memory error", conn);
+    if (!conn) die("Memory error", conn);
 
-    conn->db = malloc(sizeof(struct Database));
-    if (!conn->db)
-        die("Memory error", conn);
+    if (mode == 'c') {
+        conn->db = malloc(sizeof(struct Database));
+        if (!conn->db) die("Memory error", conn);
 
-    conn->db->MAX_DATA = MAX_DATA;
-    conn->db->MAX_ROWS = MAX_ROWS;
-    conn->db->rows = malloc(sizeof(struct Address) * MAX_ROWS);
-    for (int i = 0; i < MAX_ROWS; i++)
-    {
-        conn->db->rows[i].name = malloc(MAX_DATA);
-        conn->db->rows[i].email = malloc(MAX_DATA);
-    }
-
-    if (mode == 'c')
-    {
         conn->file = fopen(filename, "w");
-    }
-    else
-    {
-        conn->file = fopen(filename, "r+");
+        if (!conn->file) die("Failed to open the file", conn);
 
-        if (conn->file)
-        {
-            Database_load(conn);
+        // 将MAX_DATA和MAX_ROWS写入文件
+        fwrite(&MAX_DATA, sizeof(int), 1, conn->file);
+        fwrite(&MAX_ROWS, sizeof(int), 1, conn->file);
+
+        // 初始化Database结构体
+        conn->db->MAX_DATA = MAX_DATA;
+        conn->db->MAX_ROWS = MAX_ROWS;
+        conn->db->rows = malloc(sizeof(struct Address) * MAX_ROWS);
+        for (int i = 0; i < MAX_ROWS; i++) {
+            conn->db->rows[i].name = malloc(MAX_DATA);
+            conn->db->rows[i].email = malloc(MAX_DATA);
         }
-    }
+    } else {
+        conn->file = fopen(filename, "r+");
+        if (!conn->file) die("Failed to open the file", conn);
 
-    if (!conn->file)
-        die("Failed to open the file", conn);
+        // 从文件读取MAX_DATA和MAX_ROWS
+        fread(&MAX_DATA, sizeof(int), 1, conn->file);
+        fread(&MAX_ROWS, sizeof(int), 1, conn->file);
+
+        conn->db = malloc(sizeof(struct Database));
+        if (!conn->db) die("Memory error", conn);
+
+        conn->db->MAX_DATA = MAX_DATA;
+        conn->db->MAX_ROWS = MAX_ROWS;
+        conn->db->rows = malloc(sizeof(struct Address) * MAX_ROWS);
+        for (int i = 0; i < MAX_ROWS; i++) {
+            conn->db->rows[i].name = malloc(MAX_DATA);
+            conn->db->rows[i].email = malloc(MAX_DATA);
+        }
+
+        Database_load(conn);
+    }
 
     return conn;
 }
+
 
 void Database_close(struct Connection *conn)
 {
@@ -137,7 +149,8 @@ void Database_create(struct Connection *conn)
 
 void Database_set(struct Connection *conn, int id, const char *name, const char *email)
 {
-    struct Address *addr = &conn->db->rows[id];
+    struct Address *addr = &(conn->db->rows[id]);
+    printf("addr->set: %d\n", addr->set);
     if (addr->set)
         die("Already set, delete it first", conn);
 
@@ -230,6 +243,7 @@ int main(int argc, char *argv[])
     else
     {
         // 对于其他操作，不需要MAX_DATA和MAX_ROWS，但需要检查数据库文件是否存在
+        printf("filename: %s\n", filename);
         conn = Database_open(filename, action, 0, 0); // 0s表示这些值将被忽略
         if (!conn)
             die("Database not found. Use 'c' option to create one.", NULL);
@@ -240,6 +254,7 @@ int main(int argc, char *argv[])
         int id = atoi(argv[3]);
         if (id >= conn->db->MAX_ROWS)
             die("There's not that many records.", conn);
+        printf("id: %d\n", id);
 
         switch (action)
         {
@@ -282,4 +297,5 @@ int main(int argc, char *argv[])
         Database_close(conn);
 
         return 0;
-    }
+    }   
+}
