@@ -162,8 +162,6 @@ void Database_write(struct Connection *conn)
     // 然后逐个写入Address项
     for (int i = 0; i < conn->db->MAX_ROWS; i++)
     {
-        if (conn->db->rows[i].set != 1)
-            continue;
         struct Address *addr = &conn->db->rows[i];
 
         // 写入Address的id和set
@@ -255,8 +253,8 @@ void Database_get(struct Connection *conn, int id)
 
 void Database_delete(struct Connection *conn, int id)
 {
-    struct Address addr = {.id = id, .set = 0};
-    conn->db->rows[id] = addr;
+    // struct Address addr = {.id = id, .set = 0};
+    conn->db->rows[id].set = 0;
     // printf("id: %d\n", id);
     // printf("addr->set: %d\n", conn->db->rows[id].set);
 }
@@ -264,16 +262,17 @@ void Database_delete(struct Connection *conn, int id)
 void Database_list(struct Connection *conn)
 {
     int i = 0;
-    printf("conn->db->rows[3].set: %d\n", conn->db->rows[3].set);
+    // printf("conn->db->rows[3].set: %d\n", conn->db->rows[3].set);
 
     for (i = 0; i < conn->db->MAX_ROWS; i++)
     {
         struct Address *cur = &conn->db->rows[i];
-        printf("cur->id: %d\n", cur->id);
-        printf("cur->set: %d\n", cur->set);
+        // printf("cur->id: %d\n", cur->id);
+        // printf("cur->set: %d\n", cur->set);
 
         if (cur->set)
         {
+            // printf("i: %d\n", i);
             Address_print(cur);
         }
     }
