@@ -57,21 +57,41 @@ void Address_print(struct Address *addr)
 
 void Database_load(struct Connection *conn)
 {
-    int rc = fread(conn->db, sizeof(struct Database), 1, conn->file);
-    if (rc != 1)
-        die("Failed to load database.", conn);
+    // 确保文件指针在首个Address记录的开始位置
+    fseek(conn->file, sizeof(int) * 2, SEEK_SET);
+
+    for (int i = 0; i < conn->db->MAX_ROWS; i++)
+    {
+        struct Address *addr = &conn->db->rows[i];
+        if (addr->set)
+            Address_print(addr);
+
+        fread(&addr->id, sizeof(addr->id), 1, conn->file);
+        fread(&addr->set, sizeof(addr->set), 1, conn->file);
+        if (addr->set)
+        {
+            fread(addr->name, sizeof(char), conn->db->MAX_DATA, conn->file);
+            fread(addr->email, sizeof(char), conn->db->MAX_DATA, conn->file);
+        }
+    }
+    // printf("Database loaded.\n");
 }
 
-struct Connection *Database_open(const char *filename, char mode, int MAX_DATA, int MAX_ROWS) {
+struct Connection *Database_open(const char *filename, char mode, int MAX_DATA, int MAX_ROWS)
+{
     struct Connection *conn = malloc(sizeof(struct Connection));
-    if (!conn) die("Memory error", conn);
+    if (!conn)
+        die("Memory error", conn);
 
-    if (mode == 'c') {
+    if (mode == 'c')
+    {
         conn->db = malloc(sizeof(struct Database));
-        if (!conn->db) die("Memory error", conn);
+        if (!conn->db)
+            die("Memory error", conn);
 
         conn->file = fopen(filename, "w");
-        if (!conn->file) die("Failed to open the file", conn);
+        if (!conn->file)
+            die("Failed to open the file", conn);
 
         // 将MAX_DATA和MAX_ROWS写入文件
         fwrite(&MAX_DATA, sizeof(int), 1, conn->file);
@@ -81,35 +101,41 @@ struct Connection *Database_open(const char *filename, char mode, int MAX_DATA, 
         conn->db->MAX_DATA = MAX_DATA;
         conn->db->MAX_ROWS = MAX_ROWS;
         conn->db->rows = malloc(sizeof(struct Address) * MAX_ROWS);
-        for (int i = 0; i < MAX_ROWS; i++) {
+        for (int i = 0; i < MAX_ROWS; i++)
+        {
             conn->db->rows[i].name = malloc(MAX_DATA);
             conn->db->rows[i].email = malloc(MAX_DATA);
         }
-    } else {
+    }
+    else
+    {
         conn->file = fopen(filename, "r+");
-        if (!conn->file) die("Failed to open the file", conn);
+        if (!conn->file)
+            die("Failed to open the file", conn);
 
         // 从文件读取MAX_DATA和MAX_ROWS
         fread(&MAX_DATA, sizeof(int), 1, conn->file);
         fread(&MAX_ROWS, sizeof(int), 1, conn->file);
 
         conn->db = malloc(sizeof(struct Database));
-        if (!conn->db) die("Memory error", conn);
+        if (!conn->db)
+            die("Memory error", conn);
 
         conn->db->MAX_DATA = MAX_DATA;
         conn->db->MAX_ROWS = MAX_ROWS;
         conn->db->rows = malloc(sizeof(struct Address) * MAX_ROWS);
-        for (int i = 0; i < MAX_ROWS; i++) {
+        for (int i = 0; i < MAX_ROWS; i++)
+        {
             conn->db->rows[i].name = malloc(MAX_DATA);
             conn->db->rows[i].email = malloc(MAX_DATA);
         }
+        // printf("conn->db->MAX_DATA: %d, conn->db->MAX_ROWS: %d\n", conn->db->MAX_DATA, conn->db->MAX_ROWS);
 
         Database_load(conn);
     }
 
     return conn;
 }
-
 
 void Database_close(struct Connection *conn)
 {
@@ -127,12 +153,55 @@ void Database_write(struct Connection *conn)
 {
     rewind(conn->file);
 
-    int rc = fwrite(conn->db, sizeof(struct Database), 1, conn->file);
-    if (rc != 1)
-        die("Failed to write database.", conn);
+    // 首先写入MAX_DATA和MAX_ROWS
+    if (fwrite(&conn->db->MAX_DATA, sizeof(int), 1, conn->file) != 1)
+        die("Failed to write MAX_DATA.", conn);
+    if (fwrite(&conn->db->MAX_ROWS, sizeof(int), 1, conn->file) != 1)
+        die("Failed to write MAX_ROWS.", conn);
 
-    rc = fflush(conn->file);
-    if (rc == -1)
+    // 然后逐个写入Address项
+    for (int i = 0; i < conn->db->MAX_ROWS; i++)
+    {
+        if (conn->db->rows[i].set != 1)
+            continue;
+        struct Address *addr = &conn->db->rows[i];
+
+        // 写入Address的id和set
+        if (fwrite(&addr->id, sizeof(addr->id), 1, conn->file) != 1)
+            die("Failed to write id.", conn);
+        if (fwrite(&addr->set, sizeof(addr->set), 1, conn->file) != 1)
+            die("Failed to write set.", conn);
+
+        // printf("addr->id: %d\n", addr->id);
+        // printf("addr->set: %d\n", addr->set);
+
+        // 只有当set为真时才写入name和email
+        if (addr->set)
+        {
+            // 确保字符串不超过MAX_DATA长度，最后一个字符保留为'\0'
+            addr->name[conn->db->MAX_DATA - 1] = '\0';
+            addr->email[conn->db->MAX_DATA - 1] = '\0';
+
+            // 使用memset填充剩余的空间
+            memset(addr->name + strlen(addr->name), '\0', conn->db->MAX_DATA - strlen(addr->name) - 1);
+            memset(addr->email + strlen(addr->email), '\0', conn->db->MAX_DATA - strlen(addr->email) - 1);
+
+            // 写入name和email到文件
+            size_t written = fwrite(addr->name, sizeof(char), conn->db->MAX_DATA, conn->file);
+            if (written < conn->db->MAX_DATA)
+            {
+                die("Failed to write name.", conn);
+            }
+            written = fwrite(addr->email, sizeof(char), conn->db->MAX_DATA, conn->file);
+            if (written < conn->db->MAX_DATA)
+            {
+                die("Failed to write email.", conn);
+            }
+        }
+    }
+
+    // 刷新文件以确保写入完成
+    if (fflush(conn->file) == -1)
         die("Cannot flush database.", conn);
 }
 
@@ -150,15 +219,16 @@ void Database_create(struct Connection *conn)
 void Database_set(struct Connection *conn, int id, const char *name, const char *email)
 {
     struct Address *addr = &(conn->db->rows[id]);
-    printf("addr->set: %d\n", addr->set);
+    // printf("id: %d\n", id);
+    // printf("addr->set: %d\n", addr->set);
     if (addr->set)
         die("Already set, delete it first", conn);
 
     addr->set = 1;
-    // WARNING: bug, read the "How To Break It" and fix this
+    addr->id = id;
     char *res = strncpy(addr->name, name, conn->db->MAX_DATA - 1);
     addr->name[conn->db->MAX_DATA - 1] = '\0';
-    // demonstrate the strncpy bug
+    // printf("addr->name: %s\n", addr->name);
     if (!res)
         die("Name copy failed", conn);
 
@@ -166,6 +236,7 @@ void Database_set(struct Connection *conn, int id, const char *name, const char 
     addr->email[conn->db->MAX_DATA - 1] = '\0';
     if (!res)
         die("Email copy failed", conn);
+    // Address_print(addr);
 }
 
 void Database_get(struct Connection *conn, int id)
@@ -186,16 +257,20 @@ void Database_delete(struct Connection *conn, int id)
 {
     struct Address addr = {.id = id, .set = 0};
     conn->db->rows[id] = addr;
+    // printf("id: %d\n", id);
+    // printf("addr->set: %d\n", conn->db->rows[id].set);
 }
 
 void Database_list(struct Connection *conn)
 {
     int i = 0;
-    struct Database *db = conn->db;
+    printf("conn->db->rows[3].set: %d\n", conn->db->rows[3].set);
 
     for (i = 0; i < conn->db->MAX_ROWS; i++)
     {
-        struct Address *cur = &db->rows[i];
+        struct Address *cur = &conn->db->rows[i];
+        printf("cur->id: %d\n", cur->id);
+        printf("cur->set: %d\n", cur->set);
 
         if (cur->set)
         {
@@ -227,6 +302,7 @@ int main(int argc, char *argv[])
     char *filename = argv[1];
     char action = argv[2][0];
     struct Connection *conn = NULL;
+    int id = 0;
 
     // 如果是创建操作，确保有足够的参数
     if (action == 'c')
@@ -243,7 +319,7 @@ int main(int argc, char *argv[])
     else
     {
         // 对于其他操作，不需要MAX_DATA和MAX_ROWS，但需要检查数据库文件是否存在
-        printf("filename: %s\n", filename);
+        // printf("filename: %s\n", filename);
         conn = Database_open(filename, action, 0, 0); // 0s表示这些值将被忽略
         if (!conn)
             die("Database not found. Use 'c' option to create one.", NULL);
@@ -251,11 +327,13 @@ int main(int argc, char *argv[])
 
     if (argc > 3 && action != 'c')
     {
-        int id = atoi(argv[3]);
+        id = atoi(argv[3]);
         if (id >= conn->db->MAX_ROWS)
             die("There's not that many records.", conn);
-        printf("id: %d\n", id);
+    }
 
+    if (action != 'c')
+    {
         switch (action)
         {
         case 'f':
@@ -297,5 +375,5 @@ int main(int argc, char *argv[])
         Database_close(conn);
 
         return 0;
-    }   
+    }
 }
