@@ -1,0 +1,1 @@
+/usr/bin/cc CMakeFiles/test_queue.dir/list.c.o CMakeFiles/test_queue.dir/list_algos.c.o CMakeFiles/test_queue.dir/test_queue.c.o -o test_queue 

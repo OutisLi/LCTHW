@@ -1,0 +1,3 @@
+/home/outisli/Documents/LCTHW/42/build/CMakeFiles/test_queue.dir
+/home/outisli/Documents/LCTHW/42/build/CMakeFiles/edit_cache.dir
+/home/outisli/Documents/LCTHW/42/build/CMakeFiles/rebuild_cache.dir
