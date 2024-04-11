@@ -1,0 +1,3 @@
+/home/outisli/Documents/LCTHW/33/build/CMakeFiles/list_algos_test.dir
+/home/outisli/Documents/LCTHW/33/build/CMakeFiles/edit_cache.dir
+/home/outisli/Documents/LCTHW/33/build/CMakeFiles/rebuild_cache.dir

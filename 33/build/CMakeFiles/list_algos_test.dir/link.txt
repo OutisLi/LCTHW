@@ -1,0 +1,1 @@
+/usr/bin/cc CMakeFiles/list_algos_test.dir/list.c.o CMakeFiles/list_algos_test.dir/list_algos.c.o CMakeFiles/list_algos_test.dir/list_algos_test.c.o -o list_algos_test 
